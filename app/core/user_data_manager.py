@@ -2,13 +2,14 @@
 
 import json
 import os
-import bcrypt
+import csv
 from typing import Dict
 from ..schemas.user import UserInDB
 from ..core.security import get_password_hash
 
 # Đường dẫn đến tệp dữ liệu người dùng
-USERS_DB_FILE = "./user_db.json"
+USERS_DB_FILE = "C:\Users\Admin\VisuoGeometry-Trainer-ver1\user_db.json"
+ACCOUNTS_CSV_FILE = "C:\Users\Admin\VisuoGeometry-Trainer-ver1\accounts_list.csv"
 
 # Giả lập cơ sở dữ liệu người dùng
 user_db: Dict[str, dict] = {}
@@ -18,6 +19,19 @@ def load_users_from_file():
     if os.path.exists(USERS_DB_FILE):
         with open(USERS_DB_FILE, "r", encoding='utf-8') as f:
             user_db = json.load(f)
+
+    if os.path.exists(ACCOUNTS_CSV_FILE):
+        with open(ACCOUNTS_CSV_FILE, mode='r', encoding='utf-8') as csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            for row in csv_reader:
+                username = row['username']
+                password = row['password']
+                hashed_password = get_password_hash(password)
+                user_db[username] = {
+                    "username": username,
+                    "hashed_password": hashed_password
+                }
+        print(f"Đã tải {len(user_db)} tài khoản từ cả file JSON và CSV.")
 
 def save_users_to_file():
     with open(USERS_DB_FILE, "w", encoding='utf-8') as f:
@@ -35,19 +49,15 @@ def create_user(new_user: UserInDB):
     user_db[new_user.username] = user_data
     save_users_to_file()
 
-# Tải dữ liệu người dùng khi khởi động ứng dụng
 load_users_from_file()
 
-# Nếu không có người dùng nào, tạo một số người dùng mặc định
 if not user_db:
-    # Mật khẩu gốc: "test_password"
     hashed_password = get_password_hash("test_password")
     user_db["test_user"] = {
         "username": "test_user",
         "hashed_password": hashed_password
     }
     
-    # Mật khẩu gốc: "demo_password"
     hashed_password_demo = get_password_hash("demo_password")
     user_db["demo_user"] = {
         "username": "demo_user",
