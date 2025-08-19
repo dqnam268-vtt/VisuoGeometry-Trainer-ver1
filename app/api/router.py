@@ -8,9 +8,9 @@ import random
 from typing import Dict, List
 
 from ..schemas.question import QuestionPublic, Submission, SubmissionResult, Option, Content
-
 from ..core.adaptation import AdaptationEngine
 from ..core.student_bkt_manager import StudentBKTManager
+from ..core.security import get_current_user
 
 router = APIRouter()
 
@@ -27,13 +27,13 @@ def get_student_manager(student_id: str, request: Request) -> StudentBKTManager:
         student_managers[student_id] = StudentBKTManager(student_id=student_id, all_kcs=all_kcs)
     return student_managers[student_id]
 
-@router.get("/session/{student_id}/next-question", response_model=QuestionPublic, tags=["Session"])
+@router.get("/session/next-question", response_model=QuestionPublic, tags=["Session"])
 def get_next_question(
-    student_id: str,
+    current_user: str = Depends(get_current_user),
     question_bank: list = Depends(get_question_bank),
     adaptation_engine: AdaptationEngine = Depends(get_adaptation_engine),
-    student_manager: StudentBKTManager = Depends(get_student_manager)
 ):
+    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
     next_kc, next_difficulty = adaptation_engine.get_next_question_spec(student_manager=student_manager)
     
     potential_questions = [
@@ -62,13 +62,13 @@ def get_next_question(
 
     return QuestionPublic(**question_data_for_public)
 
-@router.post("/session/{student_id}/submit-answer", response_model=SubmissionResult, tags=["Session"])
+@router.post("/session/submit-answer", response_model=SubmissionResult, tags=["Session"])
 def submit_answer(
-    student_id: str,
     submission: Submission,
+    current_user: str = Depends(get_current_user),
     question_bank: list = Depends(get_question_bank),
-    student_manager: StudentBKTManager = Depends(get_student_manager)
 ):
+    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
     question = next((q for q in question_bank if q['question_id'] == submission.question_id), None)
     if not question:
          raise HTTPException(status_code=404, detail=f"Không tìm thấy câu hỏi ID: {submission.question_id}")
@@ -83,11 +83,11 @@ def submit_answer(
         "correct_answer": question.get('correct_answer', '')
     }
 
-@router.get("/students/{student_id}/export", tags=["Students"])
+@router.get("/students/export", tags=["Students"])
 def export_student_data(
-    student_id: str,
-    student_manager: StudentBKTManager = Depends(get_student_manager)
+    current_user: str = Depends(get_current_user),
 ):
+    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
     mastery_vector = student_manager.get_mastery_vector()
     interactions_df = student_manager.get_interactions_df()
     
@@ -101,25 +101,25 @@ def export_student_data(
     response = StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=results_{student_id}.csv"}
+        headers={"Content-Disposition": f"attachment; filename=results_{current_user}.csv"}
     )
     return response
 
-@router.get("/students/{student_id}/dashboard", tags=["Students"], response_model=List[Dict])
+@router.get("/students/dashboard", tags=["Students"], response_model=List[Dict])
 def get_dashboard_data(
-    student_id: str,
-    student_manager: StudentBKTManager = Depends(get_student_manager)
+    current_user: str = Depends(get_current_user),
 ):
+    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
     mastery_vector = student_manager.get_mastery_vector()
     sorted_mastery = sorted(mastery_vector.items(), key=lambda item: item[1], reverse=True)
     dashboard_data = [{"skill": kc, "mastery": prob} for kc, prob in sorted_mastery]
     return dashboard_data
 
-@router.get("/students/{student_id}/progress")
+@router.get("/students/progress")
 async def get_student_progress(
-    student_id: str,
-    student_manager: StudentBKTManager = Depends(get_student_manager)
+    current_user: str = Depends(get_current_user),
 ):
+    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
     topic_stars = student_manager.get_topic_stars()
     total_stars = student_manager.get_total_stars()
     current_title = student_manager.get_current_title()
