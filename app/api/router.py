@@ -30,11 +30,12 @@ def get_student_manager(student_id: str, request: Request) -> StudentBKTManager:
 
 @router.get("/session/next-question", response_model=QuestionPublic, tags=["Session"])
 def get_next_question(
+    request: Request, # Thêm tham số Request
     current_user: str = Depends(get_current_user),
     question_bank: list = Depends(get_question_bank),
     adaptation_engine: AdaptationEngine = Depends(get_adaptation_engine),
 ):
-    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
+    student_manager = get_student_manager(student_id=current_user, request=request)
     next_kc, next_difficulty = adaptation_engine.get_next_question_spec(student_manager=student_manager)
     
     potential_questions = [
@@ -65,11 +66,12 @@ def get_next_question(
 
 @router.post("/session/submit-answer", response_model=SubmissionResult, tags=["Session"])
 def submit_answer(
+    request: Request, # Thêm tham số Request
     submission: Submission,
     current_user: str = Depends(get_current_user),
     question_bank: list = Depends(get_question_bank),
 ):
-    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
+    student_manager = get_student_manager(student_id=current_user, request=request)
     question = next((q for q in question_bank if q['question_id'] == submission.question_id), None)
     if not question:
          raise HTTPException(status_code=404, detail=f"Không tìm thấy câu hỏi ID: {submission.question_id}")
@@ -87,8 +89,9 @@ def submit_answer(
 @router.get("/students/export", tags=["Students"])
 def export_student_data(
     current_user: str = Depends(get_current_user),
+    request: Request,
 ):
-    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
+    student_manager = get_student_manager(student_id=current_user, request=request)
     mastery_vector = student_manager.get_mastery_vector()
     interactions_df = student_manager.get_interactions_df()
     
@@ -109,8 +112,9 @@ def export_student_data(
 @router.get("/students/dashboard", tags=["Students"], response_model=List[Dict])
 def get_dashboard_data(
     current_user: str = Depends(get_current_user),
+    request: Request,
 ):
-    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
+    student_manager = get_student_manager(student_id=current_user, request=request)
     mastery_vector = student_manager.get_mastery_vector()
     sorted_mastery = sorted(mastery_vector.items(), key=lambda item: item[1], reverse=True)
     dashboard_data = [{"skill": kc, "mastery": prob} for kc, prob in sorted_mastery]
@@ -119,8 +123,9 @@ def get_dashboard_data(
 @router.get("/students/progress")
 async def get_student_progress(
     current_user: str = Depends(get_current_user),
+    request: Request,
 ):
-    student_manager = get_student_manager(student_id=current_user, request=Request(scope={'type': 'http', 'app': app}))
+    student_manager = get_student_manager(student_id=current_user, request=request)
     topic_stars = student_manager.get_topic_stars()
     total_stars = student_manager.get_total_stars()
     current_title = student_manager.get_current_title()
