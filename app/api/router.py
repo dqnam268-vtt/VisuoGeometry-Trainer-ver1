@@ -30,7 +30,7 @@ def get_student_manager(student_id: str, request: Request) -> StudentBKTManager:
 
 @router.get("/session/next-question", response_model=QuestionPublic, tags=["Session"])
 def get_next_question(
-    request: Request, # Thêm tham số Request
+    request: Request,
     current_user: str = Depends(get_current_user),
     question_bank: list = Depends(get_question_bank),
     adaptation_engine: AdaptationEngine = Depends(get_adaptation_engine),
@@ -66,7 +66,7 @@ def get_next_question(
 
 @router.post("/session/submit-answer", response_model=SubmissionResult, tags=["Session"])
 def submit_answer(
-    request: Request, # Thêm tham số Request
+    request: Request,
     submission: Submission,
     current_user: str = Depends(get_current_user),
     question_bank: list = Depends(get_question_bank),
@@ -88,8 +88,8 @@ def submit_answer(
 
 @router.get("/students/export", tags=["Students"])
 def export_student_data(
-    current_user: str = Depends(get_current_user),
     request: Request,
+    current_user: str = Depends(get_current_user),
 ):
     student_manager = get_student_manager(student_id=current_user, request=request)
     mastery_vector = student_manager.get_mastery_vector()
@@ -111,8 +111,8 @@ def export_student_data(
 
 @router.get("/students/dashboard", tags=["Students"], response_model=List[Dict])
 def get_dashboard_data(
-    current_user: str = Depends(get_current_user),
     request: Request,
+    current_user: str = Depends(get_current_user),
 ):
     student_manager = get_student_manager(student_id=current_user, request=request)
     mastery_vector = student_manager.get_mastery_vector()
@@ -122,8 +122,8 @@ def get_dashboard_data(
 
 @router.get("/students/progress")
 async def get_student_progress(
-    current_user: str = Depends(get_current_user),
     request: Request,
+    current_user: str = Depends(get_current_user),
 ):
     student_manager = get_student_manager(student_id=current_user, request=request)
     topic_stars = student_manager.get_topic_stars()
