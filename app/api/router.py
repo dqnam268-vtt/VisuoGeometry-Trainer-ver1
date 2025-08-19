@@ -11,6 +11,7 @@ from ..schemas.question import QuestionPublic, Submission, SubmissionResult, Opt
 from ..core.adaptation import AdaptationEngine
 from ..core.student_bkt_manager import StudentBKTManager
 from ..core.security import get_current_user
+from ..core.user_data_manager import user_db
 
 router = APIRouter()
 

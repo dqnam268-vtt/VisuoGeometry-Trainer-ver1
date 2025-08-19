@@ -5,15 +5,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from passlib.context import CryptContext
-import secrets
 
 # Import các router và các lớp logic từ các gói con trong cùng gói 'app'
 from .api.router import router
 from .api.auth import router as auth_router
 from .core.adaptation import AdaptationEngine
 from .core.student_bkt_manager import StudentBKTManager
-from .core.user_data_manager import user_db, get_user, save_user_db
-from .core.security import ACCESS_TOKEN_EXPIRE_MINUTES, get_password_hash
+from .core.user_data_manager import user_db, save_user_db
+from .core.security import get_password_hash
 
 app = FastAPI(
     title="VisuoGeometry-Trainer",
