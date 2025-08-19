@@ -42,10 +42,17 @@
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
 
     <div id="login-container" class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 m-4 text-center">
-        <h1 class="text-3xl font-bold text-gray-800">Chào mừng bạn!</h1>
-        <p class="text-gray-500 mt-2 mb-6">Vui lòng nhập tên của bạn để bắt đầu.</p>
-        <input type="text" id="student-id-input" class="w-full border-2 border-gray-300 rounded-lg p-3 text-lg text-center focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ví dụ: an_nguyen">
-        <button id="start-btn" class="mt-4 w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 transition-colors duration-200">Bắt đầu</button>
+        <h1 class="text-3xl font-bold text-gray-800">Hệ Thống Luyện Tập Hình Học</h1>
+        <p class="text-gray-500 mt-2 mb-6">Vui lòng đăng nhập để bắt đầu.</p>
+        <form id="login-form">
+            <div class="mb-4">
+                <input type="text" id="username-input" class="w-full border-2 border-gray-300 rounded-lg p-3 text-lg text-center focus:border-indigo-500 focus:ring-indigo-500" placeholder="Tên đăng nhập" required>
+            </div>
+            <div class="mb-4">
+                <input type="password" id="password-input" class="w-full border-2 border-gray-300 rounded-lg p-3 text-lg text-center focus:border-indigo-500 focus:ring-indigo-500" placeholder="Mật khẩu" required>
+            </div>
+            <button type="submit" id="login-btn" class="mt-4 w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 transition-colors duration-200">Đăng nhập</button>
+        </form>
     </div>
 
     <div id="app-container" class="hidden w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8 m-4">
@@ -94,22 +101,27 @@
 
         <footer class="mt-8 border-t pt-4 text-center">
              <button id="export-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-75 transition-colors duration-200">Xuất kết quả (CSV)</button>
+             <button id="logout-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transition-colors duration-200">Đăng xuất</button>
         </footer>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const API_BASE_URL = 'https://visuogeometry-trainer.onrender.com/api/v1';
+            const API_BASE_URL = 'http://localhost:8000/api/v1'; // Đã chỉnh sửa để chạy cục bộ
+            
+            // --- CÁC PHẦN TỬ GIAO DIỆN ---
             const loginContainer = document.getElementById('login-container');
+            const loginForm = document.getElementById('login-form');
+            const usernameInput = document.getElementById('username-input');
+            const passwordInput = document.getElementById('password-input');
             const appContainer = document.getElementById('app-container');
-            const studentIdInput = document.getElementById('student-id-input');
-            const startBtn = document.getElementById('start-btn');
             const studentIdDisplay = document.getElementById('student-id-display');
             const questionTextEl = document.getElementById('question-text');
             const optionsContainerEl = document.getElementById('options-container');
             const feedbackTextEl = document.getElementById('feedback-text');
             const nextQuestionBtn = document.getElementById('next-question-btn');
             const exportBtn = document.getElementById('export-btn');
+            const logoutBtn = document.getElementById('logout-btn');
             
             const totalStarsDisplay = document.getElementById('total-stars-display');
             const studentTitleDisplay = document.getElementById('student-title-display');
@@ -118,13 +130,12 @@
             const toggleProgressBtn = document.getElementById('toggle-progress-btn');
             const progressDashboardSection = document.getElementById('progress-dashboard-section');
             const masteryChartCanvas = document.getElementById('masteryChart');
-            let masteryChartInstance = null;
-
             const studentProgressNameEl = document.getElementById('student-progress-name').querySelector('strong');
 
-
+            let masteryChartInstance = null;
             let currentQuestion = null;
-            let studentId = null;
+            let accessToken = null;
+            let currentUsername = null;
 
             const knowledgeComponentMap = {
                 "hinh_hop_lap_phuong": { full: "Hình hộp chữ nhật và Hình lập phương" },
@@ -133,8 +144,106 @@
                 "dien_tich_the_tich_hinh_lang_tru": { full: "Diện tích và Thể tích hình lăng trụ" }
             };
 
+            // --- CÁC HÀM XÁC THỰC VÀ QUẢN LÝ PHIÊN ---
+            async function handleLogin(event) {
+                event.preventDefault();
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value;
+
+                if (!username || !password) {
+                    alert('Vui lòng nhập tên người dùng và mật khẩu.');
+                    return;
+                }
+
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('username', username);
+                    formData.append('password', password);
+
+                    const response = await fetch(`${API_BASE_URL}/token`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Tên đăng nhập hoặc mật khẩu không đúng.');
+                    }
+
+                    const data = await response.json();
+                    accessToken = data.access_token;
+                    currentUsername = username;
+                    localStorage.setItem('access_token', accessToken);
+                    localStorage.setItem('username', currentUsername);
+                    
+                    showApp();
+                } catch (error) {
+                    alert(`Lỗi đăng nhập: ${error.message}`);
+                    console.error('Login error:', error);
+                }
+            }
+
+            function handleLogout() {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('username');
+                accessToken = null;
+                currentUsername = null;
+                showLogin();
+            }
+
+            function showApp() {
+                loginContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                studentIdDisplay.textContent = currentUsername;
+                studentProgressNameEl.textContent = currentUsername;
+                getNextQuestion();
+            }
+
+            function showLogin() {
+                loginContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+
+            function checkLoginStatus() {
+                const storedToken = localStorage.getItem('access_token');
+                const storedUsername = localStorage.getItem('username');
+                if (storedToken && storedUsername) {
+                    accessToken = storedToken;
+                    currentUsername = storedUsername;
+                    showApp();
+                } else {
+                    showLogin();
+                }
+            }
+
+            // --- CÁC HÀM XỬ LÝ CÂU HỎI VÀ TIẾN ĐỘ HỌC TẬP (CÓ THAY ĐỔI) ---
+            
+            async function fetchWithAuth(url, options = {}) {
+                if (!accessToken) {
+                    alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                    handleLogout();
+                    return null;
+                }
+                const headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${accessToken}`
+                };
+                try {
+                    const response = await fetch(url, { ...options, headers });
+                    if (response.status === 401) {
+                        alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                        handleLogout();
+                        return null;
+                    }
+                    return response;
+                } catch (error) {
+                    console.error('Fetch with auth error:', error);
+                    alert('Lỗi mạng hoặc server. Vui lòng kiểm tra kết nối.');
+                    return null;
+                }
+            }
+
             function renderQuestion(data) {
-                // Sửa đổi để hiển thị công thức toán học
                 if (data.content.formula_latex) {
                     questionTextEl.innerHTML = `
                         <p>${data.content.text}</p>
@@ -153,7 +262,6 @@
                     optionsContainerEl.appendChild(button);
                 });
                 
-                // Cập nhật MathJax sau khi nội dung được thêm
                 if (typeof MathJax !== 'undefined') {
                     MathJax.typesetPromise([optionsContainerEl, questionTextEl]);
                 }
@@ -176,9 +284,8 @@
                     const correctOption = currentQuestion.options.find(opt => opt.is_correct);
                     if (correctOption) {
                         allButtons.forEach(btn => {
-                            // CẬP NHẬT: Sửa lỗi hiển thị công thức trong đáp án đúng
                             const btnMathSpan = btn.querySelector('.math');
-                            if (btnMathSpan && btnMathSpan.textContent === correctOption.text) {
+                            if (btnMathSpan && btnMathSpan.textContent.trim() === correctOption.text.trim()) {
                                 btn.classList.add('reveal-correct');
                             }
                         });
@@ -192,32 +299,20 @@
                     await fetchAndRenderProgress();
                 }
 
-                // CẬP NHẬT: Gọi MathJax sau khi phản hồi được hiển thị
                 if (typeof MathJax !== 'undefined') {
                     MathJax.typesetPromise([feedbackTextEl]);
                 }
             }
 
-            async function handleLogin() {
-                const inputId = studentIdInput.value.trim().toLowerCase().replace(/\s+/g, '_');
-                if (!inputId) { alert('Vui lòng nhập tên!'); return; }
-                studentId = inputId;
-                studentIdDisplay.textContent = studentId;
-                studentProgressNameEl.textContent = studentId.replace(/_/g, ' ');
-
-                loginContainer.classList.add('hidden');
-                appContainer.classList.remove('hidden');
-                await getNextQuestion();
-            }
-
             async function getNextQuestion() {
-                if (!studentId) return;
+                if (!currentUsername) return;
                 questionTextEl.textContent = 'Đang tải...';
                 optionsContainerEl.innerHTML = '';
                 feedbackTextEl.textContent = '';
                 nextQuestionBtn.classList.add('hidden');
                 try {
-                    const response = await fetch(`${API_BASE_URL}/session/${studentId}/next-question`);
+                    const response = await fetchWithAuth(`${API_BASE_URL}/session/next-question`);
+                    if (!response) return;
                     if (!response.ok) throw new Error('Lỗi mạng hoặc server.');
                     const data = await response.json();
                     currentQuestion = data;
@@ -229,13 +324,14 @@
             }
 
             async function submitAnswer(questionId, isCorrect) {
-                if (!studentId) return null;
+                if (!currentUsername) return null;
                 try {
-                    const response = await fetch(`${API_BASE_URL}/session/${studentId}/submit-answer`, {
+                    const response = await fetchWithAuth(`${API_BASE_URL}/session/submit-answer`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ question_id: questionId, correct: isCorrect })
                     });
+                    if (!response) return null;
                     if (!response.ok) throw new Error('Lỗi server khi nộp bài.');
                     return await response.json();
                 } catch (error) {
@@ -246,11 +342,9 @@
             }
             
             function exportResults() {
-                if (!studentId) { alert("Vui lòng đăng nhập để xuất kết quả."); return; }
-                window.location.href = `${API_BASE_URL}/students/${studentId}/export`;
+                if (!currentUsername) { alert("Vui lòng đăng nhập để xuất kết quả."); return; }
+                window.location.href = `${API_BASE_URL}/students/export`;
             }
-
-            // --- CÁC HÀM MỚI CHO TIẾN ĐỘ HỌC TẬP VÀ BIỂU ĐỒ ---
 
             function renderStars(numStars) {
                 let starsHtml = '';
@@ -341,7 +435,7 @@
             }
 
             async function fetchAndRenderProgress() {
-                if (!studentId) {
+                if (!currentUsername) {
                     totalStarsDisplay.textContent = '0';
                     studentTitleDisplay.textContent = 'Chưa đăng nhập';
                     topicProgressContainer.innerHTML = '<p class="text-center text-gray-600">Vui lòng đăng nhập để xem tiến độ.</p>';
@@ -357,7 +451,8 @@
                 topicProgressContainer.innerHTML = '<p class="text-center text-gray-600">Đang tải tiến độ...</p>';
 
                 try {
-                    const response = await fetch(`${API_BASE_URL}/students/${studentId}/progress`);
+                    const response = await fetchWithAuth(`${API_BASE_URL}/students/progress`);
+                    if (!response) return;
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
@@ -366,7 +461,7 @@
 
                     totalStarsDisplay.textContent = data.total_stars;
                     studentTitleDisplay.textContent = data.title;
-                    studentProgressNameEl.textContent = studentId.replace(/_/g, ' ');
+                    studentProgressNameEl.textContent = currentUsername;
 
                     if (data.topic_progress && data.topic_progress.length > 0) {
                         renderMasteryChart(data.topic_progress);
@@ -390,7 +485,6 @@
                             masteryChartInstance = null;
                         }
                     }
-
                 } catch (error) {
                     console.error("Lỗi khi tải tiến độ học sinh:", error);
                     totalStarsDisplay.textContent = 'Lỗi';
@@ -404,13 +498,10 @@
             }
 
             // --- TRÌNH NGHE SỰ KIỆN (EVENT LISTENERS) ---
-            startBtn.addEventListener('click', handleLogin);
-            studentIdInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') handleLogin();
-            });
+            loginForm.addEventListener('submit', handleLogin);
             nextQuestionBtn.addEventListener('click', getNextQuestion);
             exportBtn.addEventListener('click', exportResults);
-            
+            logoutBtn.addEventListener('click', handleLogout);
             refreshProgressBtn.addEventListener('click', fetchAndRenderProgress);
 
             toggleProgressBtn.addEventListener('click', () => {
@@ -423,6 +514,7 @@
                 }
             });
 
+            checkLoginStatus();
         });
     </script>
 </body>
