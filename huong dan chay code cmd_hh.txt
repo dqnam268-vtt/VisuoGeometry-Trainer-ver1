@@ -44,3 +44,6 @@ Lệnh này có nghĩa là: "di chuyển tệp student_model.py từ thư mục 
 
 rmdir /s /q "app\api\__pycache__"
 xóa cache
+
+uvicorn app.main:app --reload
+.\venv\Scripts\activate

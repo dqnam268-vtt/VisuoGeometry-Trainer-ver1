@@ -8,8 +8,8 @@ from ..schemas.user import UserInDB
 from ..core.security import get_password_hash
 
 # Đường dẫn đến tệp dữ liệu người dùng
-USERS_DB_FILE = "C:\Users\Admin\VisuoGeometry-Trainer-ver1\user_db.json"
-ACCOUNTS_CSV_FILE = "C:\Users\Admin\VisuoGeometry-Trainer-ver1\accounts_list.csv"
+USERS_DB_FILE = "C:/Users/Admin/VisuoGeometry-Trainer-ver1/user_db.json"
+ACCOUNTS_CSV_FILE = "C:/Users/Admin/VisuoGeometry-Trainer-ver1/accounts_list.csv"
 
 # Giả lập cơ sở dữ liệu người dùng
 user_db: Dict[str, dict] = {}
