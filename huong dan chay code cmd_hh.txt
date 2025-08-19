@@ -23,7 +23,9 @@ py -m pip install -r requirements.txt
 
 Lệnh này sẽ thông báo cho Git rằng bạn muốn bao gồm tệp Procfile vào lần commit tiếp theo của mình.
 
-
+py -m venv myenv
+myenv\Scripts\activate
+pip install -r requirements.txt
 
 git add Procfile 
 git commit -m "Rename Procfile.txt to Procfile"
