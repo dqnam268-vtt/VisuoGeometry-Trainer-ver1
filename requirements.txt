@@ -8,10 +8,8 @@ requests
 sqlalchemy
 psycopg2-binary
 gunicorn
-passlib
 python-multipart
 passlib[bcrypt]
 python-jose[cryptography]
 python-dotenv
 mysql-connector-python
-bcrypt
