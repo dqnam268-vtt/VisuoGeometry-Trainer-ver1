@@ -6,8 +6,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict
+from pathlib import Path # <<< THÊM MỚI
 
-# Import all your modules here, in a logical order
+# Import các module khác
 from .api import router
 from .api.auth import auth_router
 from .core.adaptation import AdaptationEngine
@@ -30,13 +31,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Tải dữ liệu từ tệp JSON
-def load_data_from_json(file_path: str):
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+# --- THAY ĐỔI LỚN: Tải dữ liệu bằng đường dẫn tuyệt đối ---
+try:
+    # Lấy đường dẫn đến thư mục chứa file main.py (thư mục 'app')
+    app_dir = Path(__file__).parent
+    
+    # Xây dựng đường dẫn tuyệt đối đến file JSON trong thư mục 'data'
+    json_file_path = app_dir / "data" / "question_bank.json"
 
-# Biến global
-question_bank = load_data_from_json(os.path.join('data', 'question_bank.json'))
+    print(f"Đang tải ngân hàng câu hỏi từ: {json_file_path}")
+
+    with open(json_file_path, 'r', encoding='utf-8') as f:
+        question_bank = json.load(f)
+
+except FileNotFoundError:
+    print(f"LỖI NGHIÊM TRỌNG: Không tìm thấy tệp question_bank.json tại: {json_file_path}")
+    # Dừng ứng dụng nếu không tải được file dữ liệu cốt lõi
+    raise
+# --- KẾT THÚC THAY ĐỔI ---
+
+
 all_knowledge_components = list(set([q['knowledge_component'] for q in question_bank]))
 
 # Thêm các biến state vào ứng dụng
