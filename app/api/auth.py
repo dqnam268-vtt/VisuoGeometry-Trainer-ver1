@@ -1,3 +1,5 @@
+# app/api/auth.py
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
@@ -18,7 +20,7 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
     user = user_db.get(username)
     if not user:
         return None
-    # Sửa lỗi ở đây: Sử dụng hàm verify_password để so sánh mật khẩu băm
+    # Sửa lỗi: Sử dụng hàm verify_password để so sánh mật khẩu băm
     if not verify_password(password, user['hashed_password']):
         return None
     return user

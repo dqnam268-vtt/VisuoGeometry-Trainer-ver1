@@ -2,27 +2,23 @@
 
 from datetime import datetime, timedelta
 from typing import Optional
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+
+# Import các hàm cần thiết từ các file khác
 from .user_data_manager import get_user
+from .hashing import verify_password # <<< THAY ĐỔI QUAN TRỌNG
 
 # Các tham số cấu hình bảo mật
 SECRET_KEY = "your-secret-key"  # Thay thế bằng một chuỗi ngẫu nhiên mạnh
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/token")
 
-def verify_password(plain_password, hashed_password):
-    """Kiểm tra mật khẩu thường với mật khẩu đã băm."""
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password):
-    """Băm mật khẩu."""
-    return pwd_context.hash(password)
+# --- Phần mã xử lý mật khẩu (pwd_context, get_password_hash) đã được XÓA ---
+# --- Hàm verify_password gốc cũng đã được XÓA và giờ được import từ hashing.py ---
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Tạo JWT."""

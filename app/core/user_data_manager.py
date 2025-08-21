@@ -5,11 +5,11 @@ import os
 import csv
 from typing import Dict
 from ..schemas.user import UserInDB
-from ..core.security import get_password_hash
+# Đã xóa dòng: from ..core.security import get_password_hash
 
 # Đường dẫn đến tệp dữ liệu người dùng
-USERS_DB_FILE = "C:/Users/Admin/VisuoGeometry-Trainer-ver1/user_db.json"
-ACCOUNTS_CSV_FILE = "C:/Users/Admin/VisuoGeometry-Trainer-ver1/accounts_list.csv"
+USERS_DB_FILE = ".C:/Users/Admin/VisuoGeometry-Trainer-ver1/user_db.json"
+ACCOUNTS_CSV_FILE = ".C:/Users/Admin/VisuoGeometry-Trainer-ver1/accounts_list.csv"
 
 # Giả lập cơ sở dữ liệu người dùng
 user_db: Dict[str, dict] = {}
@@ -26,6 +26,8 @@ def load_users_from_file():
             for row in csv_reader:
                 username = row['username']
                 password = row['password']
+                # Local import
+                from .hashing import get_password_hash
                 hashed_password = get_password_hash(password)
                 user_db[username] = {
                     "username": username,
@@ -41,6 +43,8 @@ def get_user(username: str):
     return user_db.get(username)
 
 def create_user(new_user: UserInDB):
+    # Local import
+    from ..core.security import get_password_hash
     hashed_password = get_password_hash(new_user.password)
     user_data = {
         "username": new_user.username,
@@ -52,6 +56,8 @@ def create_user(new_user: UserInDB):
 load_users_from_file()
 
 if not user_db:
+    # Local import
+    from ..core.security import get_password_hash
     hashed_password = get_password_hash("test_password")
     user_db["test_user"] = {
         "username": "test_user",
