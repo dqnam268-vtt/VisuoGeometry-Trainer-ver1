@@ -21,14 +21,18 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Thêm middleware CORS
-origins = ["*"]
+# Thêm cấu hình CORS để cho phép frontend truy cập backend
+origins = [
+    "https://dqnam268-vtt.github.io",  # Thay thế bằng URL frontend của bạn
+    # Bạn có thể thêm các URL khác nếu cần
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Cho phép tất cả các phương thức HTTP
+    allow_headers=["*"],  # Cho phép tất cả các tiêu đề
 )
 
 # --- THAY ĐỔI LỚN: Tải dữ liệu bằng đường dẫn tuyệt đối ---
