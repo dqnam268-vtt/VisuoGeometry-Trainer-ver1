@@ -1,16 +1,25 @@
+# Core frameworks and servers
 fastapi
 uvicorn[standard]
+gunicorn
+
+# Data handling and machine learning
 scikit-learn
 pydantic
 numpy
 pandas
-requests
+
+# Database connections
 sqlalchemy
 psycopg2-binary
-gunicorn
-python-multipart
-python-jose[cryptography]
-python-dotenv
 mysql-connector-python
+
+# Authentication and security
+python-jose[cryptography]
 passlib[bcrypt]>=1.7.4
 bcrypt>=4.0.0
+
+# Other utilities
+requests
+python-multipart
+python-dotenv
