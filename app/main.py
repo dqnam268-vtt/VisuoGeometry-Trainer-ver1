@@ -63,6 +63,6 @@ app.state.all_knowledge_components = all_knowledge_components
 app.state.adaptation_engine = AdaptationEngine(all_kcs=all_knowledge_components)
 app.state.student_managers = {}
 
-# Bao gồm các router
-app.include_router(router.router, prefix="/api", tags=["API"])
-app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
+# Gộp các router vào một router chính để quản lý dễ hơn
+app.include_router(router.router, tags=["API"])
+app.include_router(auth_router, tags=["Auth"])
