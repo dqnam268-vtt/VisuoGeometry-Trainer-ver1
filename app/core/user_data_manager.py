@@ -5,11 +5,13 @@ import os
 import csv
 from typing import Dict
 from ..schemas.user import UserInDB
-# Đã xóa dòng: from ..core.security import get_password_hash
+# THAY ĐỔI QUAN TRỌNG: Import từ hashing.py ở đầu file
+from .hashing import get_password_hash
 
 # Đường dẫn đến tệp dữ liệu người dùng
-USERS_DB_FILE = ".C:/Users/Admin/VisuoGeometry-Trainer-ver1/user_db.json"
-ACCOUNTS_CSV_FILE = ".C:/Users/Admin/VisuoGeometry-Trainer-ver1/accounts_list.csv"
+# Lưu ý: Sửa lại đường dẫn tuyệt đối cho phù hợp với môi trường của bạn hoặc dùng đường dẫn tương đối
+USERS_DB_FILE = "user_db.json"
+ACCOUNTS_CSV_FILE = "accounts_list.csv"
 
 # Giả lập cơ sở dữ liệu người dùng
 user_db: Dict[str, dict] = {}
@@ -26,9 +28,7 @@ def load_users_from_file():
             for row in csv_reader:
                 username = row['username']
                 password = row['password']
-                # Local import
-                from .hashing import get_password_hash
-                hashed_password = get_password_hash(password)
+                hashed_password = get_password_hash(password) # Sử dụng hàm đã import
                 user_db[username] = {
                     "username": username,
                     "hashed_password": hashed_password
@@ -43,9 +43,7 @@ def get_user(username: str):
     return user_db.get(username)
 
 def create_user(new_user: UserInDB):
-    # Local import
-    from ..core.security import get_password_hash
-    hashed_password = get_password_hash(new_user.password)
+    hashed_password = get_password_hash(new_user.password) # Sử dụng hàm đã import
     user_data = {
         "username": new_user.username,
         "hashed_password": hashed_password
@@ -53,11 +51,11 @@ def create_user(new_user: UserInDB):
     user_db[new_user.username] = user_data
     save_users_to_file()
 
+# Tải người dùng khi khởi động
 load_users_from_file()
 
+# Tạo người dùng mặc định nếu DB trống
 if not user_db:
-    # Local import
-    from ..core.security import get_password_hash
     hashed_password = get_password_hash("test_password")
     user_db["test_user"] = {
         "username": "test_user",
